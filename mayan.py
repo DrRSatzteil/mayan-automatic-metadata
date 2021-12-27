@@ -1,13 +1,11 @@
-import requests
-import re
-import json
 from json import JSONDecodeError
 from typing import Union
+import json
 import logging
+import re
+import requests
 
 _logger = logging.getLogger(__name__)
-
-
 
 class Endpoint(object):
     def __init__(self, endpoint: str, *, params: dict = {}, base: str = None):
@@ -134,6 +132,22 @@ class Mayan(object):
         except JSONDecodeError:
             return {}
 
+    def uploadfile(self, endpoint: Union[str, Endpoint], json_data, file_data):
+        if endpoint is str:
+            endpoint = self.ep(endpoint)
+        if self.test:
+            print("WOULD POST", str(endpoint), json.dumps(json_data, indent=2))
+            return {}
+        print(self.session.headers)
+        result = self.session.post(endpoint, data=json_data, files=file_data, headers={
+                                   'Content-type': None})
+        if result.status_code != 202:
+            _logger.warning(json.dumps(result.json(), indent=2))
+        try:
+            return result.json()
+        except JSONDecodeError:
+            return {}
+
     def put(self, endpoint: Union[str, Endpoint], json_data):
         if endpoint is str:
             endpoint = self.ep(endpoint)
@@ -145,7 +159,7 @@ class Mayan(object):
             _logger.warning(json.dumps(result.json(), indent=2))
         try:
             return result.json()
-        except JSONDecodeError:
+        except ValueError:
             return {}
 
     def jp(self, data):
